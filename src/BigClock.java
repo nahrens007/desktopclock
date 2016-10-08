@@ -83,7 +83,7 @@ public class BigClock
 			
 			/* 
 			 * Slow down the refresh rate so it doesn't consume
-			 * all the machine's resources.
+			 * all the machine's resources. 
 			 */
 			try
 			{
