@@ -80,7 +80,7 @@ public class BigClock
 			timeLabel.repaint();
 			dateLabel.setText( dateFormatter.format( calendar.getTime() ) );
 			dateLabel.repaint();
-			
+			 
 			/* 
 			 * Slow down the refresh rate so it doesn't consume
 			 * all the machine's resources.
