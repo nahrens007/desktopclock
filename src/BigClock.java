@@ -84,7 +84,7 @@ public class BigClock
 			/* 
 			 * Slow down the refresh rate so it doesn't consume
 			 * all the machine's resources. 
-			 */ 
+			 */  
 			try
 			{
 				Thread.sleep( 200 );
