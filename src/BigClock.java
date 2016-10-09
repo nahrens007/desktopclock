@@ -31,6 +31,9 @@ public class BigClock
 	private Calendar calendar;
 	private SimpleDateFormat timeFormatter;
 	private SimpleDateFormat dateFormatter;
+	private String defaultTitle = "CLOCK";
+	private int updateQueryInterval = 30;
+	private long refreshInterval = 200;
 	
 	public BigClock() throws IOException
 	{
@@ -41,7 +44,7 @@ public class BigClock
 	private void start() throws IOException
 	{
 		
-		frame = new JFrame( "CLOCK" );
+		frame = new JFrame( defaultTitle );
 		frame.setSize( 460, 400 );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		
@@ -73,6 +76,9 @@ public class BigClock
 		timeFormatter = new SimpleDateFormat( "kk:mm:ss" );
 		dateFormatter = new SimpleDateFormat( "EEEE, MMM d, yyyy" );
 		
+		System.out.println( JFrame.NORMAL + " " + JFrame.ICONIFIED + " " + JFrame.MAXIMIZED_HORIZ + " " +
+				JFrame.MAXIMIZED_VERT + " " + JFrame.MAXIMIZED_BOTH );
+		
 		updateSettings();
 		int updateSettingsCounter = 0;
 		/*
@@ -93,21 +99,21 @@ public class BigClock
 			 */
 			try
 			{
-				Thread.sleep( 200 );
+				Thread.sleep( refreshInterval );
 			} catch ( InterruptedException e )
 			{
 				System.out.println( "Error: " + e.getMessage() );
 			}
 			
-			// update the settings every 30 seconds (200 * 150 = 30,000ms = 30s
-			if ( updateSettingsCounter >= 150 )
+			// update the settings only every interval period ( * 5 because there are 5 * 200ms in a second)
+			if ( updateSettingsCounter >= updateQueryInterval * (int) (1000 / refreshInterval) )
 			{
 				if ( updateSettings() )
 					updateSettingsCounter = 0;
 				else
 					// Double the amount of time before checking for updated settings if it was unsuccessful, that way,
 					// we don't waste so many resources trying to update the settings when its not even working.
-					updateSettingsCounter = -150;
+					updateSettingsCounter = -updateQueryInterval * (int) (1000 / refreshInterval);
 			}
 			
 			updateSettingsCounter++;
@@ -120,6 +126,9 @@ public class BigClock
 	 */
 	private boolean updateSettings()
 	{
+		
+		// Reset the title just in case it is set to an error title.
+		frame.setTitle( defaultTitle );
 		
 		try
 		{
@@ -136,7 +145,7 @@ public class BigClock
 				/*
 				 * Deblank the string for simpler use
 				 */
-				setting = removeWhiteSpaces( settings.nextLine() ).toLowerCase();
+				setting = removeWhiteSpaces( settings.nextLine() );
 				
 				/*
 				 * if the line is empty, move to the next one.
@@ -163,7 +172,7 @@ public class BigClock
 				/*
 				 * Switch through possible settings
 				 */
-				switch ( selector[0] )
+				switch ( selector[0].toLowerCase() )
 				{
 					case "background-color":
 						/*
@@ -192,8 +201,19 @@ public class BigClock
 						continue;
 					
 					case "title":
-						tempString = respace( selector[1] );
-						frame.setTitle( tempString );
+						frame.setTitle( respace( selector[1] ) );
+						continue;
+					
+					case "extended-state":
+						frame.setExtendedState( Integer.parseInt( selector[1] ) );
+						continue;
+					
+					case "query-interval":
+						updateQueryInterval = Integer.parseInt( selector[1] );
+						continue;
+					
+					case "refresh-interval":
+						refreshInterval = Long.parseLong( selector[1] );
 						continue;
 					
 					default:
@@ -205,27 +225,26 @@ public class BigClock
 		} catch ( MalformedURLException e )
 		{
 			System.out.println( e.getMessage() );
-			frame.setTitle( "~CLOCK" );
+			frame.setTitle( "CLOCK - Bad URL" );
 			return false;
 		} catch ( IOException e )
 		{
 			System.out.println( e.getMessage() );
-			frame.setTitle( "~CLOCK" );
+			frame.setTitle( "CLOCK - IO Error" );
 			return false;
 		} catch ( NumberFormatException e )
 		{
-			System.out.println( e.getMessage() );
-			frame.setTitle( "~CLOCK" );
+			System.out.println( "Error: " + e.getMessage() );
+			frame.setTitle( "CLOCK - Parse Error" );
 			return false;
 		} catch ( Exception e )
 		{
 			System.out.println( "The clock has encoutered an unexpected error retrieving the settings file..." );
 			System.out.println( e.getMessage() );
 			e.printStackTrace();
+			frame.setTitle( "CLOCK - Unexpected Error" );
 			return false;
 		}
-		
-		frame.setTitle( "CLOCK" );
 		
 		return true;
 	}
