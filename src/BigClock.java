@@ -2,7 +2,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -12,26 +17,46 @@ import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
+import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
+
+import com.sun.glass.events.KeyEvent;
 
 public class BigClock
 {
 	
 	private static String SETTING_FILE_URL = "http://nateshot.homenet.org:8025/clock_settings.txt";
+	private static final float VERSION_NUMBER = 2.2f;
+	private static final String defaultSettings = "background-color:(45, 54, 45)\n" +
+			"font-color:(155,172,134)\n" + "title:Clock%v" + VERSION_NUMBER + "\n" +
+			"extended-state:6\n" + "query-interval:60\n" + "refresh-interval:500\n";
+	private final String DEFAULT_FILEPATH = "clock_settings";
 	
 	private JFrame frame;
 	private JLabel timeLabel;
 	private JLabel dateLabel;
 	private JPanel container;
 	private JPanel main;
+	
+	private JMenuBar menuBar;
+	private JMenu fileMenu; // File menu - will contain exit
+	private JMenu editMenu; // Exit menu - will contain settings and preferences
+	private JMenuItem exitItem; // To exit
+	private JMenuItem bgColorItem;
+	private JMenuItem fgColorItem;
+	private JMenuItem preferenceItem;
+	
 	private Calendar calendar;
 	private SimpleDateFormat timeFormatter;
 	private SimpleDateFormat dateFormatter;
-	private String defaultTitle = "CLOCK";
+	private String defaultTitle = "CLOCK v" + VERSION_NUMBER;
 	private int updateQueryInterval = 30;
 	private long refreshInterval = 200;
 	
@@ -47,6 +72,8 @@ public class BigClock
 		frame = new JFrame( defaultTitle );
 		frame.setSize( 460, 400 );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		
+		buildMenuBar();
 		
 		main = new JPanel();
 		
@@ -70,16 +97,36 @@ public class BigClock
 		
 		frame.add( main );
 		frame.setExtendedState( 6 );
-		frame.setIconImage( ImageIO.read( BigClock.class.getClassLoader().getResourceAsStream( "clock.png" ) ) );
+		frame.setIconImage( ImageIO
+				.read( BigClock.class.getClassLoader().getResourceAsStream( "clock.png" ) ) );
 		frame.setVisible( true );
 		
 		timeFormatter = new SimpleDateFormat( "kk:mm:ss" );
 		dateFormatter = new SimpleDateFormat( "EEEE, MMM d, yyyy" );
 		
-		System.out.println( JFrame.NORMAL + " " + JFrame.ICONIFIED + " " + JFrame.MAXIMIZED_HORIZ + " " +
-				JFrame.MAXIMIZED_VERT + " " + JFrame.MAXIMIZED_BOTH );
+		/*
+		 * load the settings
+		 */
+		Scanner settingsScanner;
+		try
+		{
+			/*
+			 * If a settings file doesn't exist, settings from the Internet will be loaded.
+			 */
+			settingsScanner = new Scanner( new File( DEFAULT_FILEPATH ) );
+		} catch ( Exception e ) // Do the following for all exceptions thrown
+		{
+			try
+			{
+				URL settingsURL = new URL( SETTING_FILE_URL );
+				settingsScanner = new Scanner( settingsURL.openStream() );
+			} catch ( MalformedURLException ex )
+			{
+				settingsScanner = new Scanner( defaultSettings );
+			}
+		}
 		
-		updateSettings();
+		updateSettings( settingsScanner );
 		int updateSettingsCounter = 0;
 		/*
 		 * Continue updating the time while the program is running, and repaint the label with the time in it...
@@ -89,9 +136,7 @@ public class BigClock
 			calendar = Calendar.getInstance();
 			
 			timeLabel.setText( timeFormatter.format( calendar.getTime() ) );
-			timeLabel.repaint();
 			dateLabel.setText( dateFormatter.format( calendar.getTime() ) );
-			dateLabel.repaint();
 			
 			/* 
 			 * Slow down the refresh rate so it doesn't consume
@@ -105,14 +150,17 @@ public class BigClock
 				System.out.println( "Error: " + e.getMessage() );
 			}
 			
-			// update the settings only every interval period ( * 5 because there are 5 * 200ms in a second)
+			// update the settings only every interval period ( * 5 because
+			// there are 5 * 200ms in a second)
 			if ( updateSettingsCounter >= updateQueryInterval * (int) (1000 / refreshInterval) )
 			{
-				if ( updateSettings() )
+				if ( updateSettings( settingsScanner ) )
 					updateSettingsCounter = 0;
 				else
-					// Double the amount of time before checking for updated settings if it was unsuccessful, that way,
-					// we don't waste so many resources trying to update the settings when its not even working.
+					// Double the amount of time before checking for updated
+					// settings if it was unsuccessful, that way,
+					// we don't waste so many resources trying to update the
+					// settings when its not even working.
 					updateSettingsCounter = -updateQueryInterval * (int) (1000 / refreshInterval);
 			}
 			
@@ -120,11 +168,94 @@ public class BigClock
 		}
 	}
 	
+	private void buildMenuBar()
+	{
+		
+		menuBar = new JMenuBar();
+		
+		buildFileMenu();
+		buildEditMenu();
+		
+		menuBar.add( fileMenu );
+		menuBar.add( editMenu );
+		
+		frame.setJMenuBar( menuBar );
+	}
+	
+	private void buildFileMenu()
+	{
+		
+		exitItem = new JMenuItem( "Exit" );
+		exitItem.setMnemonic( KeyEvent.VK_X );
+		exitItem.addActionListener( new ExitListener() );
+		
+		// Create a JMenu object for the file menu
+		fileMenu = new JMenu( "File" );
+		fileMenu.setMnemonic( KeyEvent.VK_F );
+		
+		fileMenu.add( exitItem );
+		
+		return;
+	}
+	
+	private void buildEditMenu()
+	{
+		
+		bgColorItem = new JMenuItem( "Background Color" );
+		bgColorItem.setMnemonic( KeyEvent.VK_B );
+		bgColorItem.addActionListener( new ColorListener() );
+		
+		fgColorItem = new JMenuItem( "Text Color" );
+		fgColorItem.setMnemonic( KeyEvent.VK_T );
+		fgColorItem.addActionListener( new ColorListener() );
+		
+		preferenceItem = new JMenuItem( "Preferences" );
+		preferenceItem.setMnemonic( KeyEvent.VK_P );
+		preferenceItem.addActionListener( new PreferenceListener() );
+		
+		editMenu = new JMenu( "Edit" );
+		editMenu.setMnemonic( KeyEvent.VK_E );
+		
+		editMenu.add( bgColorItem );
+		editMenu.add( fgColorItem );
+		editMenu.add( preferenceItem );
+		
+		return;
+		
+	}
+	
+	private void saveSettings( String filePath )
+	{
+		
+		try
+		{
+			PrintWriter fileOut = new PrintWriter( new File( filePath ) );
+			
+			fileOut.println( "background-color:" + "(" + main.getBackground().getRed() + "," +
+					main.getBackground().getGreen() + "," + main.getBackground().getBlue() + ")" );
+			fileOut.println( "font-color:" + "(" + timeLabel.getForeground().getRed() + "," +
+					timeLabel.getForeground().getGreen() + "," +
+					timeLabel.getForeground().getBlue() + ")" );
+			fileOut.println( "title:" + frame.getTitle() ); // Need to replace
+															// spaces with a %
+			fileOut.println( "extended-state:" + frame.getExtendedState() );
+			fileOut.println( "query-interval:" + updateQueryInterval );
+			fileOut.println( "refresh-interval:" + refreshInterval );
+			fileOut.close();
+		} catch ( FileNotFoundException e )
+		{
+			System.out.println( "Unable to save settings to the file path: " + filePath + "\n" );
+			e.printStackTrace();
+		}
+		
+		return;
+	}
+	
 	/**
 	 * Update the clock settings from the url text file<br>
 	 * http://nateshot.homenet.org:8025/clock_settings.txt
 	 */
-	private boolean updateSettings()
+	private boolean updateSettings( Scanner settings )
 	{
 		
 		// Reset the title just in case it is set to an error title.
@@ -132,8 +263,7 @@ public class BigClock
 		
 		try
 		{
-			URL settingsURL = new URL( SETTING_FILE_URL );
-			Scanner settings = new Scanner( settingsURL.openStream() );
+			
 			String setting, selector[];
 			
 			/*
@@ -221,17 +351,6 @@ public class BigClock
 				}
 			}
 			
-			settings.close();
-		} catch ( MalformedURLException e )
-		{
-			System.out.println( e.getMessage() );
-			frame.setTitle( "CLOCK - Bad URL" );
-			return false;
-		} catch ( IOException e )
-		{
-			System.out.println( e.getMessage() );
-			frame.setTitle( "CLOCK - IO Error" );
-			return false;
 		} catch ( NumberFormatException e )
 		{
 			System.out.println( "Error: " + e.getMessage() );
@@ -239,7 +358,8 @@ public class BigClock
 			return false;
 		} catch ( Exception e )
 		{
-			System.out.println( "The clock has encoutered an unexpected error retrieving the settings file..." );
+			System.out.println(
+					"The clock has encoutered an unexpected error retrieving the settings file..." );
 			System.out.println( e.getMessage() );
 			e.printStackTrace();
 			frame.setTitle( "CLOCK - Unexpected Error" );
@@ -250,11 +370,13 @@ public class BigClock
 	}
 	
 	/**
-	 * This method will replace all '%' symbols in a string with a single blank space.
+	 * This method will replace all '%' symbols in a string with a single blank
+	 * space.
 	 * 
 	 * @param deblankedString
 	 *            The string to be re-spaced.
-	 * @return A string void of any '%' symbols, which have been replaced by a space.
+	 * @return A string void of any '%' symbols, which have been replaced by a
+	 *         space.
 	 */
 	private static String respace( String deblankedString )
 	{
@@ -274,13 +396,15 @@ public class BigClock
 	}
 	
 	/**
-	 * This method takes a string in the format of "N,N,N" (excluding the quotes) and parses each N into a number which
-	 * will be used for its corresponding RGB color. The string must be deblanked.
+	 * This method takes a string in the format of "N,N,N" (excluding the
+	 * quotes) and parses each N into a number which will be used for its
+	 * corresponding RGB color. The string must be deblanked.
 	 * 
 	 * @param color
 	 *            The string representing the RGB values
-	 * @return A color object created from the RGB values passed in (unless the numbers passed it were larger than 255
-	 *         or less than 0, then that R, G, or B value will be 255 or 0, respectively.
+	 * @return A color object created from the RGB values passed in (unless the
+	 *         numbers passed it were larger than 255 or less than 0, then that
+	 *         R, G, or B value will be 255 or 0, respectively.
 	 */
 	private static Color verifyColor( String color )
 	{
@@ -336,7 +460,8 @@ public class BigClock
 	}
 	
 	/**
-	 * This method removes any blanks (new line character, space, or new line character) from a string.
+	 * This method removes any blanks (new line character, space, or new line
+	 * character) from a string.
 	 * 
 	 * @param str
 	 *            The string to remove white spaces from.
@@ -365,6 +490,55 @@ public class BigClock
 	{
 		
 		new BigClock();
+	}
+	
+	private class ExitListener implements ActionListener
+	{
+		
+		public void actionPerformed( ActionEvent e )
+		{
+			
+			saveSettings( DEFAULT_FILEPATH );
+			System.exit( 0 );
+		}
+	}
+	
+	private class ColorListener implements ActionListener
+	{
+		
+		public void actionPerformed( ActionEvent e )
+		{
+			
+			// Show color picker and set the setting accordingly (BG or FG)
+			Color newColor = JColorChooser.showDialog( frame, "Select a Color", Color.BLACK );
+			
+			if ( e.getSource() == bgColorItem )
+			{
+				// Handle Background Color and return
+				main.setBackground( newColor );
+				container.setBackground( newColor );
+				
+				return;
+			}
+			
+			// Handle FG color and return
+			timeLabel.setForeground( newColor );
+			dateLabel.setForeground( newColor );
+			return;
+		}
+	}
+	
+	public class PreferenceListener implements ActionListener
+	{
+		
+		public void actionPerformed( ActionEvent e )
+		{
+			
+			// Open preferences GUI
+			
+			saveSettings( DEFAULT_FILEPATH );
+			return;
+		}
 	}
 	
 }
