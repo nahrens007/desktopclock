@@ -41,7 +41,6 @@ public class BigClock
 	private void start() throws IOException
 	{
 		
-		
 		frame = new JFrame( "CLOCK" );
 		frame.setSize( 460, 400 );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
@@ -137,7 +136,7 @@ public class BigClock
 				/*
 				 * Deblank the string for simpler use
 				 */
-				setting = deblankString( settings.nextLine() ).toLowerCase();
+				setting = removeWhiteSpaces( settings.nextLine() ).toLowerCase();
 				
 				/*
 				 * if the line is empty, move to the next one.
@@ -159,7 +158,7 @@ public class BigClock
 				if ( selector.length != 2 )
 					continue;
 				
-				String isolatedValues;
+				String tempString;
 				Color newColor;
 				/*
 				 * Switch through possible settings
@@ -172,9 +171,9 @@ public class BigClock
 						 */
 						
 						// gets the numbers separated by commas
-						isolatedValues = selector[1].substring( 1, selector[1].length() - 1 );
+						tempString = selector[1].substring( 1, selector[1].length() - 1 );
 						
-						newColor = verifyColor( isolatedValues );
+						newColor = verifyColor( tempString );
 						
 						main.setBackground( newColor );
 						container.setBackground( newColor );
@@ -184,12 +183,17 @@ public class BigClock
 						 * Extract and set the color
 						 */
 						// gets the numbers separated by commas
-						isolatedValues = selector[1].substring( 1, selector[1].length() - 1 );
+						tempString = selector[1].substring( 1, selector[1].length() - 1 );
 						
-						newColor = verifyColor( isolatedValues );
+						newColor = verifyColor( tempString );
 						
 						timeLabel.setForeground( newColor );
 						dateLabel.setForeground( newColor );
+						continue;
+					
+					case "title":
+						tempString = respace( selector[1] );
+						frame.setTitle( tempString );
 						continue;
 					
 					default:
@@ -200,14 +204,17 @@ public class BigClock
 			settings.close();
 		} catch ( MalformedURLException e )
 		{
+			System.out.println( e.getMessage() );
 			frame.setTitle( "~CLOCK" );
 			return false;
 		} catch ( IOException e )
 		{
+			System.out.println( e.getMessage() );
 			frame.setTitle( "~CLOCK" );
 			return false;
 		} catch ( NumberFormatException e )
 		{
+			System.out.println( e.getMessage() );
 			frame.setTitle( "~CLOCK" );
 			return false;
 		} catch ( Exception e )
@@ -217,15 +224,51 @@ public class BigClock
 			e.printStackTrace();
 			return false;
 		}
+		
+		frame.setTitle( "CLOCK" );
+		
 		return true;
 	}
 	
+	/**
+	 * This method will replace all '%' symbols in a string with a single blank space.
+	 * 
+	 * @param deblankedString
+	 *            The string to be re-spaced.
+	 * @return A string void of any '%' symbols, which have been replaced by a space.
+	 */
+	private static String respace( String deblankedString )
+	{
+		
+		String str = "";
+		char[] charArray = deblankedString.toCharArray();
+		
+		for ( int i = 0; i < charArray.length; i++ )
+		{
+			if ( charArray[i] == '%' )
+				str += " ";
+			else
+				str += charArray[i];
+		}
+		
+		return str;
+	}
+	
+	/**
+	 * This method takes a string in the format of "N,N,N" (excluding the quotes) and parses each N into a number which
+	 * will be used for its corresponding RGB color. The string must be deblanked.
+	 * 
+	 * @param color
+	 *            The string representing the RGB values
+	 * @return A color object created from the RGB values passed in (unless the numbers passed it were larger than 255
+	 *         or less than 0, then that R, G, or B value will be 255 or 0, respectively.
+	 */
 	private static Color verifyColor( String color )
 	{
 		
 		int red, green, blue;
 		
-		color = deblankString( color );
+		color = removeWhiteSpaces( color );
 		
 		red = Integer.parseInt( color.split( "," )[0] );
 		green = Integer.parseInt( color.split( "," )[1] );
@@ -250,7 +293,13 @@ public class BigClock
 		return new Color( red, green, blue );
 	}
 	
-	private void setUIFont( FontUIResource f )
+	/**
+	 * Sets the font of the UI FontUIResource passed in.
+	 * 
+	 * @param f
+	 *            The FontUIResource to edit the font of.
+	 */
+	private static void setUIFont( FontUIResource f )
 	{
 		
 		Enumeration<Object> keys = UIManager.getDefaults().keys();
@@ -267,13 +316,14 @@ public class BigClock
 		}
 	}
 	
-	public static void main( String[] args ) throws IOException
-	{
-		
-		new BigClock();
-	}
-	
-	public static String deblankString( String str )
+	/**
+	 * This method removes any blanks (new line character, space, or new line character) from a string.
+	 * 
+	 * @param str
+	 *            The string to remove white spaces from.
+	 * @return The same string passed in, void of any white spaces.
+	 */
+	public static String removeWhiteSpaces( String str )
 	{
 		
 		int index, length = str.length();
@@ -290,6 +340,12 @@ public class BigClock
 		}
 		
 		return deblanked;
+	}
+	
+	public static void main( String[] args ) throws IOException
+	{
+		
+		new BigClock();
 	}
 	
 }
