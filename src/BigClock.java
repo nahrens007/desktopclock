@@ -32,11 +32,16 @@ import com.sun.glass.events.KeyEvent;
 public class BigClock
 {
 	
-	private static String SETTING_FILE_URL = "http://nateshot.homenet.org:8025/clock_settings.txt";
-	private static final float VERSION_NUMBER = 2.2f;
-	private static final String defaultSettings = "background-color:(45, 54, 45)\n" +
-			"font-color:(155,172,134)\n" + "title:Clock%v" + VERSION_NUMBER + "\n" +
-			"extended-state:6\n" + "query-interval:60\n" + "refresh-interval:500\n";
+	public final static String DELIMITER = "::";
+	private static String settingsFileURL = "http://nateshot.homenet.org:8025/clock_settings.txt";
+	private final static float VERSION_NUMBER = 2.2f;
+	private final static String defaultSettings = "background-color" + DELIMITER +
+			"(45, 54, 45)\n" + "font-color" + DELIMITER + "(155,172,134)\n" + "title" + DELIMITER +
+			"Clock%v" + VERSION_NUMBER + "\n" + "extended-state" + DELIMITER + "6\n" +
+			"query-interval" + DELIMITER + "60\n" + "refresh-interval" + DELIMITER + "500\n" +
+			"settings-url" + DELIMITER + settingsFileURL + "\n" + "use-net-settings" + DELIMITER +
+			"true";
+	
 	private final String DEFAULT_FILEPATH = "clock_settings";
 	
 	private JFrame frame;
@@ -59,6 +64,7 @@ public class BigClock
 	private String defaultTitle = "CLOCK v" + VERSION_NUMBER;
 	private int updateQueryInterval = 30;
 	private long refreshInterval = 200;
+	private boolean useNetSettings = true;
 	
 	public BigClock() throws IOException
 	{
@@ -92,8 +98,7 @@ public class BigClock
 		
 		main.setLayout( new GridBagLayout() );
 		main.add( container );
-		main.setBackground( Color.LIGHT_GRAY );
-		container.setBackground( Color.LIGHT_GRAY );
+		setBackgroundColor(Color.LIGHT_GRAY);
 		
 		frame.add( main );
 		frame.setExtendedState( 6 );
@@ -118,7 +123,7 @@ public class BigClock
 		{
 			try
 			{
-				URL settingsURL = new URL( SETTING_FILE_URL );
+				URL settingsURL = new URL( settingsFileURL );
 				settingsScanner = new Scanner( settingsURL.openStream() );
 			} catch ( MalformedURLException ex )
 			{
@@ -127,6 +132,36 @@ public class BigClock
 		}
 		
 		updateSettings( settingsScanner );
+		
+		/*
+		 * If using the net settings has been selected from the 
+		 * settings file, then we use the net settings before
+		 * using the local file settings.
+		 */
+		if ( useNetSettings )
+		{
+			try
+			{
+				URL settingsURL = new URL( settingsFileURL );
+				settingsScanner = new Scanner( settingsURL.openStream() );
+			} catch ( MalformedURLException ex )
+			{
+				try
+				{
+					/*
+					 * If a settings file doesn't exist, settings from the Internet will be loaded.
+					 */
+					settingsScanner = new Scanner( new File( DEFAULT_FILEPATH ) );
+				} catch ( Exception e ) // Do the following for all exceptions
+										// thrown
+				{
+					settingsScanner = new Scanner( defaultSettings );
+				}
+			}
+		}
+		
+		updateSettings( settingsScanner );
+		
 		int updateSettingsCounter = 0;
 		/*
 		 * Continue updating the time while the program is running, and repaint the label with the time in it...
@@ -166,6 +201,34 @@ public class BigClock
 			
 			updateSettingsCounter++;
 		}
+	}
+	
+	public void setBackgroundColor( Color color )
+	{
+		
+		main.setBackground( color );
+		container.setBackground( color );
+		return;
+	}
+	
+	public Color getBackgroundColor()
+	{
+		
+		return timeLabel.getForeground();
+	}
+	
+	public void setTextColor( Color color )
+	{
+		
+		timeLabel.setForeground( color );
+		dateLabel.setForeground( color );
+		return;
+	}
+	
+	public Color getTextColor()
+	{
+		
+		return main.getBackground();
 	}
 	
 	private void buildMenuBar()
@@ -231,16 +294,20 @@ public class BigClock
 		{
 			PrintWriter fileOut = new PrintWriter( new File( filePath ) );
 			
-			fileOut.println( "background-color:" + "(" + main.getBackground().getRed() + "," +
-					main.getBackground().getGreen() + "," + main.getBackground().getBlue() + ")" );
-			fileOut.println( "font-color:" + "(" + timeLabel.getForeground().getRed() + "," +
-					timeLabel.getForeground().getGreen() + "," +
-					timeLabel.getForeground().getBlue() + ")" );
-			fileOut.println( "title:" + frame.getTitle() ); // Need to replace
-															// spaces with a %
-			fileOut.println( "extended-state:" + frame.getExtendedState() );
-			fileOut.println( "query-interval:" + updateQueryInterval );
-			fileOut.println( "refresh-interval:" + refreshInterval );
+			fileOut.println( "background-color" + DELIMITER + "(" + getBackgroundColor().getRed() +
+					"," + getBackgroundColor().getGreen() + "," + getBackgroundColor().getBlue() +
+					")" );
+			fileOut.println( "font-color" + DELIMITER + "(" + getTextColor().getRed() + "," +
+					getTextColor().getGreen() + "," + getTextColor().getBlue() + ")" );
+			fileOut.println( "title" + DELIMITER + frame.getTitle() ); // Need
+																		// to
+																		// replace
+			// spaces with a %
+			fileOut.println( "extended-state" + DELIMITER + frame.getExtendedState() );
+			fileOut.println( "query-interval" + DELIMITER + updateQueryInterval );
+			fileOut.println( "refresh-interval" + DELIMITER + refreshInterval );
+			fileOut.println( "settings-url" + DELIMITER + settingsFileURL );
+			fileOut.println( "use-net-settings" + DELIMITER + useNetSettings );
 			fileOut.close();
 		} catch ( FileNotFoundException e )
 		{
@@ -293,7 +360,7 @@ public class BigClock
 				 * Check if the setting is valid - with two parts. If not, move
 				 * to the next line.
 				 */
-				selector = setting.split( ":" );
+				selector = setting.split( DELIMITER );
 				if ( selector.length != 2 )
 					continue;
 				
@@ -314,8 +381,8 @@ public class BigClock
 						
 						newColor = verifyColor( tempString );
 						
-						main.setBackground( newColor );
-						container.setBackground( newColor );
+						setBackgroundColor( newColor );
+						;
 						continue;
 					case "font-color":
 						/*
@@ -326,8 +393,7 @@ public class BigClock
 						
 						newColor = verifyColor( tempString );
 						
-						timeLabel.setForeground( newColor );
-						dateLabel.setForeground( newColor );
+						setTextColor( newColor );
 						continue;
 					
 					case "title":
@@ -344,6 +410,14 @@ public class BigClock
 					
 					case "refresh-interval":
 						refreshInterval = Long.parseLong( selector[1] );
+						continue;
+					
+					case "settings-url":
+						settingsFileURL = selector[1];
+						continue;
+					
+					case "use-net-settings":
+						useNetSettings = Boolean.parseBoolean( selector[1] );
 						continue;
 					
 					default:
@@ -515,15 +589,15 @@ public class BigClock
 			if ( e.getSource() == bgColorItem )
 			{
 				// Handle Background Color and return
-				main.setBackground( newColor );
-				container.setBackground( newColor );
+				setBackgroundColor( newColor );
 				
+				saveSettings( DEFAULT_FILEPATH );
 				return;
 			}
 			
 			// Handle FG color and return
-			timeLabel.setForeground( newColor );
-			dateLabel.setForeground( newColor );
+			setTextColor( newColor );
+			saveSettings( DEFAULT_FILEPATH );
 			return;
 		}
 	}
@@ -535,7 +609,7 @@ public class BigClock
 		{
 			
 			// Open preferences GUI
-			
+			new SettingsGUI();
 			saveSettings( DEFAULT_FILEPATH );
 			return;
 		}
