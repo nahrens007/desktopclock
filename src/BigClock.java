@@ -2,13 +2,15 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -17,6 +19,8 @@ import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -24,6 +28,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.plaf.FontUIResource;
 
@@ -66,15 +71,13 @@ public class BigClock
 	private long refreshInterval = 200;
 	private boolean useNetSettings = true;
 	
+	private Scanner settingsScanner;
+	
 	public BigClock() throws IOException
 	{
-		
-		start();
-	}
-	
-	private void start() throws IOException
-	{
-		
+		/*
+		 * Create window and initialize clock.
+		 */
 		frame = new JFrame( defaultTitle );
 		frame.setSize( 460, 400 );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
@@ -98,7 +101,7 @@ public class BigClock
 		
 		main.setLayout( new GridBagLayout() );
 		main.add( container );
-		setBackgroundColor(Color.LIGHT_GRAY);
+		setBackgroundColor( Color.LIGHT_GRAY );
 		
 		frame.add( main );
 		frame.setExtendedState( 6 );
@@ -108,30 +111,16 @@ public class BigClock
 		
 		timeFormatter = new SimpleDateFormat( "kk:mm:ss" );
 		dateFormatter = new SimpleDateFormat( "EEEE, MMM d, yyyy" );
+		start();
+	}
+	
+	private void start() throws IOException
+	{
 		
 		/*
 		 * load the settings
 		 */
-		Scanner settingsScanner;
-		try
-		{
-			/*
-			 * If a settings file doesn't exist, settings from the Internet will be loaded.
-			 */
-			settingsScanner = new Scanner( new File( DEFAULT_FILEPATH ) );
-		} catch ( Exception e ) // Do the following for all exceptions thrown
-		{
-			try
-			{
-				URL settingsURL = new URL( settingsFileURL );
-				settingsScanner = new Scanner( settingsURL.openStream() );
-			} catch ( MalformedURLException ex )
-			{
-				settingsScanner = new Scanner( defaultSettings );
-			}
-		}
-		
-		updateSettings( settingsScanner );
+		useFileSettings();
 		
 		/*
 		 * If using the net settings has been selected from the 
@@ -140,31 +129,13 @@ public class BigClock
 		 */
 		if ( useNetSettings )
 		{
-			try
-			{
-				URL settingsURL = new URL( settingsFileURL );
-				settingsScanner = new Scanner( settingsURL.openStream() );
-			} catch ( MalformedURLException ex )
-			{
-				try
-				{
-					/*
-					 * If a settings file doesn't exist, settings from the Internet will be loaded.
-					 */
-					settingsScanner = new Scanner( new File( DEFAULT_FILEPATH ) );
-				} catch ( Exception e ) // Do the following for all exceptions
-										// thrown
-				{
-					settingsScanner = new Scanner( defaultSettings );
-				}
-			}
+			useNetSettings();
 		}
 		
-		updateSettings( settingsScanner );
-		
 		int updateSettingsCounter = 0;
+		
 		/*
-		 * Continue updating the time while the program is running, and repaint the label with the time in it...
+		 * Continue updating the time while the program is running...
 		 */
 		while ( true )
 		{
@@ -203,6 +174,56 @@ public class BigClock
 		}
 	}
 	
+	private void useNetSettings()
+	{
+		
+		try
+		{
+			URL settingsURL = new URL( settingsFileURL );
+			settingsScanner = new Scanner( settingsURL.openStream() );
+		} catch ( Exception ex )
+		{
+			try
+			{
+				/*
+				 * If a settings file doesn't exist, settings from the Internet will be loaded.
+				 */
+				settingsScanner = new Scanner( new File( DEFAULT_FILEPATH ) );
+			} catch ( Exception e ) // Do the following for all exceptions
+									// thrown
+			{
+				settingsScanner = new Scanner( defaultSettings );
+			}
+		}
+		
+		updateSettings( settingsScanner );
+		return;
+	}
+	
+	private void useFileSettings()
+	{
+		
+		try
+		{
+			/*
+			 * If a settings file doesn't exist, settings from the Internet will be loaded.
+			 */
+			settingsScanner = new Scanner( new File( DEFAULT_FILEPATH ) );
+		} catch ( Exception e ) // Do the following for all exceptions thrown
+		{
+			try
+			{
+				URL settingsURL = new URL( settingsFileURL );
+				settingsScanner = new Scanner( settingsURL.openStream() );
+			} catch ( Exception ex )
+			{
+				settingsScanner = new Scanner( defaultSettings );
+			}
+		}
+		updateSettings( settingsScanner );
+		return;
+	}
+	
 	public void setBackgroundColor( Color color )
 	{
 		
@@ -214,7 +235,7 @@ public class BigClock
 	public Color getBackgroundColor()
 	{
 		
-		return timeLabel.getForeground();
+		return main.getBackground();
 	}
 	
 	public void setTextColor( Color color )
@@ -228,7 +249,7 @@ public class BigClock
 	public Color getTextColor()
 	{
 		
-		return main.getBackground();
+		return timeLabel.getForeground();
 	}
 	
 	private void buildMenuBar()
@@ -289,6 +310,12 @@ public class BigClock
 	
 	private void saveSettings( String filePath )
 	{
+		
+		/*
+		 * don't save the net settings to file
+		 */
+		if ( useNetSettings )
+			return;
 		
 		try
 		{
@@ -602,16 +629,204 @@ public class BigClock
 		}
 	}
 	
-	public class PreferenceListener implements ActionListener
+	private class PreferenceListener implements ActionListener
 	{
 		
 		public void actionPerformed( ActionEvent e )
 		{
 			
 			// Open preferences GUI
-			new SettingsGUI();
+			new PreferenceWindow();
 			saveSettings( DEFAULT_FILEPATH );
 			return;
+		}
+	}
+	
+	private class PreferenceWindow
+	{
+		
+		private JFrame pFrame;
+		private JPanel mainPanel;
+		private JLabel titleLabel;
+		private JLabel extStateLabel;
+		private JLabel useNetLabel;
+		private JLabel queryIntervalLabel;
+		private JLabel refreshIntervalLabel;
+		private JLabel urlForSettingsLabel;
+		private JTextField titleField;
+		private JTextField extStateField;
+		private JTextField queryIntervalField;
+		private JTextField refreshIntervalField;
+		private JTextField urlForSettingsField;
+		private JCheckBox useNetCheckbox;
+		private JButton save;
+		private JButton cancel;
+		
+		public PreferenceWindow()
+		{
+			pFrame = new JFrame( "Clock Settings" );
+			pFrame.setSize( 800, 500 );
+			pFrame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+			
+			mainPanel = new JPanel();
+			mainPanel.setLayout( new GridLayout( 7, 2 ) );
+			
+			titleLabel = new JLabel( "Title:" );
+			titleLabel.setToolTipText( "Title For Clock GUI" );
+			titleField = new JTextField( 20 );
+			titleField.setText( frame.getTitle() );
+			titleField.setToolTipText( "Title For Clock GUI" );
+			mainPanel.add( titleLabel, 0 );
+			mainPanel.add( titleField, 1 );
+			
+			extStateLabel = new JLabel( "Extended State:" );
+			extStateLabel.setToolTipText(
+					"NORMAL=0, ICONIFIED=1, MAXIMIZED_HORIZ=2, MAXIMIZED_VERT=4, MAXIMIZED_BOTH=6" );
+			extStateField = new JTextField( 20 );
+			extStateField.setText( String.valueOf( frame.getExtendedState() ) );
+			extStateField.setToolTipText(
+					"NORMAL=0, ICONIFIED=1, MAXIMIZED_HORIZ=2, MAXIMIZED_VERT=4, MAXIMIZED_BOTH=6" );
+			mainPanel.add( extStateLabel, 2 );
+			mainPanel.add( extStateField, 3 );
+			
+			refreshIntervalLabel = new JLabel( "Refresh Interval:" );
+			refreshIntervalLabel.setToolTipText( "Interval of refreshing date/time" );
+			refreshIntervalField = new JTextField( 20 );
+			refreshIntervalField.setText( String.valueOf( BigClock.this.refreshInterval ) );
+			refreshIntervalField.setToolTipText( "Interval of refreshing date/time" );
+			mainPanel.add( refreshIntervalLabel, 4 );
+			mainPanel.add( refreshIntervalField, 5 );
+			
+			useNetLabel = new JLabel( "Use Web Settings:" );
+			useNetLabel.setToolTipText( "Use settings found at the URL below" );
+			useNetCheckbox = new JCheckBox();
+			useNetCheckbox.setToolTipText( "Use settings found at the URL below" );
+			useNetCheckbox.addItemListener( new NetCheckboxListener() );
+			
+			mainPanel.add( useNetLabel, 6 );
+			mainPanel.add( useNetCheckbox, 7 );
+			
+			queryIntervalLabel = new JLabel( "Query Interval:" );
+			queryIntervalLabel.setToolTipText( "Interval to update settings from online file" );
+			queryIntervalField = new JTextField( 20 );
+			queryIntervalField.setText( String.valueOf( updateQueryInterval ) );
+			queryIntervalField.setToolTipText( "Interval to update settings from online file" );
+			mainPanel.add( queryIntervalLabel, 8 );
+			mainPanel.add( queryIntervalField, 9 );
+			
+			urlForSettingsLabel = new JLabel( "URL Settings File:" );
+			urlForSettingsLabel.setToolTipText( "URL to fetch settings from" );
+			urlForSettingsField = new JTextField( 20 );
+			urlForSettingsField.setText( settingsFileURL );
+			urlForSettingsField.setToolTipText( "URL to fetch settings from" );
+			mainPanel.add( urlForSettingsLabel, 10 );
+			mainPanel.add( urlForSettingsField, 11 );
+			
+			save = new JButton( "Save" );
+			save.addActionListener( new SaveListener() );
+			cancel = new JButton( "Cancel" );
+			cancel.addActionListener( new CancelListener() );
+			mainPanel.add( save, 12 );
+			mainPanel.add( cancel, 13 );
+			
+			pFrame.add( mainPanel );
+			try
+			{
+				pFrame.setIconImage( ImageIO.read(
+						BigClock.class.getClassLoader().getResourceAsStream( "clock.png" ) ) );
+			} catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
+			
+			useNetCheckbox.setSelected( true );
+			useNetCheckbox.setSelected( useNetSettings );
+			pFrame.setVisible( true );
+		}
+		
+		private class NetCheckboxListener implements ItemListener
+		{
+			
+			@Override
+			public void itemStateChanged( ItemEvent e )
+			{
+				
+				if ( e.getStateChange() == ItemEvent.SELECTED )
+				{
+					titleField.setEditable( false );
+					extStateField.setEditable( false );
+					refreshIntervalField.setEditable( false );
+					queryIntervalField.setEditable( false );
+					urlForSettingsField.setEditable( false );
+				} else
+				{
+					titleField.setEditable( true );
+					extStateField.setEditable( true );
+					refreshIntervalField.setEditable( true );
+					queryIntervalField.setEditable( true );
+					urlForSettingsField.setEditable( true );
+				}
+			}
+			
+		}
+		
+		private class SaveListener implements ActionListener
+		{
+			
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				
+				frame.setTitle( titleField.getText() );
+				try
+				{
+					frame.setExtendedState( Integer.parseInt( extStateField.getText() ) );
+				} catch ( NumberFormatException pE )
+				{
+					System.out.println( "Error retrieving integer from extended state field: " +
+							pE.getMessage() );
+				}
+				useNetSettings = useNetCheckbox.isSelected();
+				
+				try
+				{
+					updateQueryInterval = Integer.parseInt( queryIntervalField.getText() );
+				} catch ( NumberFormatException pE )
+				{
+					System.out.println( "Error retrieving integer from query interval field: " +
+							pE.getMessage() );
+				}
+				
+				try
+				{
+					refreshInterval = Long.parseLong( refreshIntervalField.getText() );
+				} catch ( NumberFormatException pE )
+				{
+					System.out.println( "Error retrieving long from refresh interval field: " +
+							pE.getMessage() );
+				}
+				
+				settingsFileURL = urlForSettingsField.getText();
+				
+				if ( useNetSettings )
+					useNetSettings();
+				saveSettings( DEFAULT_FILEPATH );
+				
+				pFrame.dispose();
+			}
+			
+		}
+		
+		private class CancelListener implements ActionListener
+		{
+			
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				
+				pFrame.dispose();
+			}
+			
 		}
 	}
 	
