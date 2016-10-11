@@ -1,8 +1,10 @@
-background-color::(51,0,255)
-font-color::(204,255,153)
-title::Nathan's%Clock%v2.2
-extended-state::6
-query-interval::60
-refresh-interval::500
+background-color::(255,0,51)
+font-color::(51,255,255)
+title::CLOCK%v2.2
+extended-state::0
+query-interval::10
+refresh-interval::1000
 settings-url::http://nateshot.homenet.org:8025/clock_settings.txt
-use-net-settings::false
+
+
+use-net-settings::true

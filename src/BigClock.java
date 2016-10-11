@@ -316,7 +316,43 @@ public class BigClock
 		 * don't save the net settings to file
 		 */
 		if ( useNetSettings )
+		{
+			String tempSettings = "";
+			try
+			{
+				Scanner fileIn = new Scanner( new File( filePath ) );
+				String read;
+				while ( fileIn.hasNextLine() )
+				{
+					read = fileIn.nextLine();
+					if ( !read.split( "::" )[0].equals( "use-net-settings" ) )
+					{
+						tempSettings += read + "\n";
+					}
+				}
+				fileIn.close();
+			} catch ( FileNotFoundException e )
+			{
+				System.out
+						.println( "Unable to save settings to the file path: " + filePath + "\n" );
+				e.printStackTrace();
+			}
+			
+			try
+			{
+				PrintWriter fileOut = new PrintWriter( new File( filePath ) );
+				fileOut.println( tempSettings );
+				fileOut.println( "use-net-settings" + DELIMITER + useNetSettings );
+				fileOut.close();
+			} catch ( FileNotFoundException e )
+			{
+				System.out
+						.println( "Unable to save settings to the file path: " + filePath + "\n" );
+				e.printStackTrace();
+			}
+			
 			return;
+		}
 		
 		try
 		{
