@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -86,7 +87,7 @@ public class BigClock
 		
 		main = new JPanel();
 		
-		setUIFont( new FontUIResource( new Font( "Arial", 0, 40 ) ) );
+		BigClock.setUIFont( new FontUIResource( new Font( "Arial", 0, 40 ) ) );
 		
 		timeLabel = new JLabel();
 		dateLabel = new JLabel();
@@ -306,7 +307,7 @@ public class BigClock
 		
 		return;
 		
-	} 
+	}
 	
 	private void saveSettings( String filePath )
 	{
@@ -326,9 +327,9 @@ public class BigClock
 					")" );
 			fileOut.println( "font-color" + DELIMITER + "(" + getTextColor().getRed() + "," +
 					getTextColor().getGreen() + "," + getTextColor().getBlue() + ")" );
-			fileOut.println( "title" + DELIMITER + frame.getTitle() ); // Need
-																		// to
-																		// replace
+			fileOut.println( "title" + DELIMITER + BigClock.despace( frame.getTitle() ) ); // Need
+			// to
+			// replace
 			// spaces with a %
 			fileOut.println( "extended-state" + DELIMITER + frame.getExtendedState() );
 			fileOut.println( "query-interval" + DELIMITER + updateQueryInterval );
@@ -496,6 +497,23 @@ public class BigClock
 		return str;
 	}
 	
+	private static String despace( String spacedString )
+	{
+		
+		String str = "";
+		char[] charArray = spacedString.toCharArray();
+		
+		for ( int i = 0; i < charArray.length; i++ )
+		{
+			if ( charArray[i] == ' ' )
+				str += "%";
+			else
+				str += charArray[i];
+		}
+		
+		return str;
+	}
+	
 	/**
 	 * This method takes a string in the format of "N,N,N" (excluding the
 	 * quotes) and parses each N into a number which will be used for its
@@ -647,6 +665,7 @@ public class BigClock
 		
 		private JFrame pFrame;
 		private JPanel mainPanel;
+		private JCheckBox useNetCheckbox;
 		private JLabel titleLabel;
 		private JLabel extStateLabel;
 		private JLabel useNetLabel;
@@ -658,9 +677,10 @@ public class BigClock
 		private JTextField queryIntervalField;
 		private JTextField refreshIntervalField;
 		private JTextField urlForSettingsField;
-		private JCheckBox useNetCheckbox;
 		private JButton save;
 		private JButton cancel;
+		
+		private Font font;
 		
 		public PreferenceWindow()
 		{
@@ -671,61 +691,76 @@ public class BigClock
 			mainPanel = new JPanel();
 			mainPanel.setLayout( new GridLayout( 7, 2 ) );
 			
+			font = new Font( "Arial", Font.PLAIN, 23 );
+			
+			useNetLabel = new JLabel( "Use Web Settings:" );
+			useNetLabel.setToolTipText( "Use settings found at the URL below" );
+			useNetLabel.setFont( font );
+			useNetCheckbox = new JCheckBox();
+			useNetCheckbox.setToolTipText( "Use settings found at the URL below" );
+			useNetCheckbox.addItemListener( new NetCheckboxListener() );
+			useNetCheckbox.setFont( font );
+			mainPanel.add( useNetLabel, 0 );
+			mainPanel.add( useNetCheckbox, 1 );
+			
 			titleLabel = new JLabel( "Title:" );
 			titleLabel.setToolTipText( "Title For Clock GUI" );
+			titleLabel.setFont( font );
 			titleField = new JTextField( 20 );
 			titleField.setText( frame.getTitle() );
 			titleField.setToolTipText( "Title For Clock GUI" );
-			mainPanel.add( titleLabel, 0 );
-			mainPanel.add( titleField, 1 );
+			titleField.setFont( font );
+			mainPanel.add( titleLabel, 2 );
+			mainPanel.add( titleField, 3 );
 			
 			extStateLabel = new JLabel( "Extended State:" );
 			extStateLabel.setToolTipText(
 					"NORMAL=0, ICONIFIED=1, MAXIMIZED_HORIZ=2, MAXIMIZED_VERT=4, MAXIMIZED_BOTH=6" );
+			extStateLabel.setFont( font );
 			extStateField = new JTextField( 20 );
 			extStateField.setText( String.valueOf( frame.getExtendedState() ) );
 			extStateField.setToolTipText(
 					"NORMAL=0, ICONIFIED=1, MAXIMIZED_HORIZ=2, MAXIMIZED_VERT=4, MAXIMIZED_BOTH=6" );
-			mainPanel.add( extStateLabel, 2 );
-			mainPanel.add( extStateField, 3 );
+			extStateField.setFont( font );
+			mainPanel.add( extStateLabel, 4 );
+			mainPanel.add( extStateField, 5 );
 			
 			refreshIntervalLabel = new JLabel( "Refresh Interval:" );
 			refreshIntervalLabel.setToolTipText( "Interval of refreshing date/time" );
+			refreshIntervalLabel.setFont( font );
 			refreshIntervalField = new JTextField( 20 );
 			refreshIntervalField.setText( String.valueOf( BigClock.this.refreshInterval ) );
 			refreshIntervalField.setToolTipText( "Interval of refreshing date/time" );
-			mainPanel.add( refreshIntervalLabel, 4 );
-			mainPanel.add( refreshIntervalField, 5 );
-			
-			useNetLabel = new JLabel( "Use Web Settings:" );
-			useNetLabel.setToolTipText( "Use settings found at the URL below" );
-			useNetCheckbox = new JCheckBox();
-			useNetCheckbox.setToolTipText( "Use settings found at the URL below" );
-			useNetCheckbox.addItemListener( new NetCheckboxListener() );
-			
-			mainPanel.add( useNetLabel, 6 );
-			mainPanel.add( useNetCheckbox, 7 );
-			
-			queryIntervalLabel = new JLabel( "Query Interval:" );
-			queryIntervalLabel.setToolTipText( "Interval to update settings from online file" );
-			queryIntervalField = new JTextField( 20 );
-			queryIntervalField.setText( String.valueOf( updateQueryInterval ) );
-			queryIntervalField.setToolTipText( "Interval to update settings from online file" );
-			mainPanel.add( queryIntervalLabel, 8 );
-			mainPanel.add( queryIntervalField, 9 );
+			refreshIntervalField.setFont( font );
+			mainPanel.add( refreshIntervalLabel, 6 );
+			mainPanel.add( refreshIntervalField, 7 );
 			
 			urlForSettingsLabel = new JLabel( "URL Settings File:" );
 			urlForSettingsLabel.setToolTipText( "URL to fetch settings from" );
-			urlForSettingsField = new JTextField( 20 );
+			urlForSettingsLabel.setFont( font );
+			urlForSettingsField = new JTextField();
 			urlForSettingsField.setText( settingsFileURL );
 			urlForSettingsField.setToolTipText( "URL to fetch settings from" );
-			mainPanel.add( urlForSettingsLabel, 10 );
-			mainPanel.add( urlForSettingsField, 11 );
+			urlForSettingsField.setFont( font );
+			mainPanel.add( urlForSettingsLabel, 8 );
+			mainPanel.add( urlForSettingsField, 9 );
+			
+			queryIntervalLabel = new JLabel( "Query Interval:" );
+			queryIntervalLabel.setToolTipText( "Interval to update settings from online file" );
+			queryIntervalLabel.setFont( font );
+			queryIntervalField = new JTextField( 20 );
+			queryIntervalField.setText( String.valueOf( updateQueryInterval ) );
+			queryIntervalField.setToolTipText( "Interval to update settings from online file" );
+			queryIntervalField.setFont( font );
+			mainPanel.add( queryIntervalLabel, 10 );
+			mainPanel.add( queryIntervalField, 11 );
 			
 			save = new JButton( "Save" );
 			save.addActionListener( new SaveListener() );
+			save.setFont( font );
 			cancel = new JButton( "Cancel" );
 			cancel.addActionListener( new CancelListener() );
+			cancel.setFont( font );
 			mainPanel.add( save, 12 );
 			mainPanel.add( cancel, 13 );
 			
@@ -738,6 +773,7 @@ public class BigClock
 			{
 				e.printStackTrace();
 			}
+			mainPanel.setFont( new Font( "Time New Roman", Font.BOLD, 35 ) );
 			
 			useNetCheckbox.setSelected( true );
 			useNetCheckbox.setSelected( useNetSettings );

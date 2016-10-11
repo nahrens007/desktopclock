@@ -1,6 +1,6 @@
 background-color::(51,0,255)
-font-color::(153,255,0)
-title::Nathan'sClockv2.2
+font-color::(204,255,153)
+title::Nathan's%Clock%v2.2
 extended-state::6
 query-interval::60
 refresh-interval::500
