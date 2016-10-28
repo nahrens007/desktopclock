@@ -14,7 +14,6 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Enumeration;
 import java.util.Scanner;
 
 import javax.imageio.ImageIO;
@@ -29,8 +28,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.UIManager;
-import javax.swing.plaf.FontUIResource;
 
 import com.sun.glass.events.KeyEvent;
 
@@ -39,7 +36,7 @@ public class BigClock
 	
 	public final static String DELIMITER = "::";
 	private static String settingsFileURL = "http://nateshot.homenet.org:8025/clock_settings.txt";
-	private final static float VERSION_NUMBER = 2.3f;
+	private final static float VERSION_NUMBER = 2.4f;
 	private final static String DEFAULT_TITLE = "CLOCK v" + VERSION_NUMBER;
 	private final String DEFAULT_FILEPATH = "clock_settings";
 	
@@ -79,11 +76,14 @@ public class BigClock
 		
 		main = new JPanel();
 		
-		BigClock.setUIFont( new FontUIResource( new Font( "Arial", 0, 40 ) ) );
+		// BigClock.setUIFont( new FontUIResource( new Font( "Arial", 0, 40 ) )
+		// );
 		
 		timeLabel = new JLabel();
 		dateLabel = new JLabel();
 		container = new JPanel();
+		timeLabel.setFont( new Font( "Arial", 0, 40 ) );
+		dateLabel.setFont( new Font( "Arial", 0, 40 ) );
 		timeLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
 		dateLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
 		
@@ -655,29 +655,6 @@ public class BigClock
 	}
 	
 	/**
-	 * Sets the font of the UI FontUIResource passed in.
-	 * 
-	 * @param f
-	 *            The FontUIResource to edit the font of.
-	 */
-	private static void setUIFont( FontUIResource f )
-	{
-		
-		Enumeration<Object> keys = UIManager.getDefaults().keys();
-		while ( keys.hasMoreElements() )
-		{
-			Object key = keys.nextElement();
-			Object value = UIManager.get( key );
-			if ( value instanceof FontUIResource )
-			{
-				FontUIResource orig = (FontUIResource) value;
-				Font font = new Font( f.getFontName(), orig.getStyle(), f.getSize() );
-				UIManager.put( key, new FontUIResource( font ) );
-			}
-		}
-	}
-	
-	/**
 	 * This method removes any blanks (new line character, space, or new line
 	 * character) from a string.
 	 * 
@@ -795,7 +772,7 @@ public class BigClock
 			mainPanel = new JPanel();
 			mainPanel.setLayout( new GridLayout( 7, 2 ) );
 			
-			font = new Font( "Arial", Font.PLAIN, 23 );
+			font = new Font( "Arial", Font.PLAIN, 16 );
 			
 			useNetLabel = new JLabel( "Use Web Settings:" );
 			useNetLabel.setToolTipText( "Use settings found at the URL below" );
