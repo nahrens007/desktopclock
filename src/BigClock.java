@@ -35,7 +35,7 @@ public class BigClock
 	
 	public final static String DELIMITER = "::";
 	private static String settingsFileURL = "http://nateshot.homenet.org:8025/clock_settings.txt";
-	private final static float VERSION_NUMBER = 2.4f;
+	private final static float VERSION_NUMBER = 2.5f;
 	private final static String DEFAULT_TITLE = "CLOCK v" + VERSION_NUMBER;
 	private final String DEFAULT_FILEPATH = "clock_settings";
 	
@@ -68,7 +68,7 @@ public class BigClock
 		 * Create window and initialize clock.
 		 */
 		frame = new JFrame( DEFAULT_TITLE );
-		frame.setSize( 460, 400 );
+		frame.setSize( 660, 500 );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		
 		buildMenuBar();
@@ -81,8 +81,8 @@ public class BigClock
 		timeLabel = new JLabel();
 		dateLabel = new JLabel();
 		container = new JPanel();
-		timeLabel.setFont( new Font( "Arial", 0, 40 ) );
-		dateLabel.setFont( new Font( "Arial", 0, 40 ) );
+		timeLabel.setFont( new Font( "Arial", Font.BOLD, 150 ) );
+		dateLabel.setFont( new Font( "Arial", Font.BOLD, 40 ) );
 		timeLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
 		dateLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
 		
