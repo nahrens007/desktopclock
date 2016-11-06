@@ -706,6 +706,9 @@ public class BigClock
 			// Show color picker and set the setting accordingly (BG or FG)
 			Color newColor = JColorChooser.showDialog( frame, "Select a Color", Color.BLACK );
 			
+			if ( newColor == null )
+				return; // If the user presses "cancel"
+				
 			if ( e.getSource() == bgColorItem )
 			{
 				// Handle Background Color and return
