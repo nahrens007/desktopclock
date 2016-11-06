@@ -33,11 +33,7 @@ import javax.swing.JTextField;
 public class BigClock
 {
 	
-	public final static String DELIMITER = "::";
-	private static String settingsFileURL = "http://nateshot.homenet.org:8025/clock_settings.txt";
-	private final static float VERSION_NUMBER = 2.5f;
-	private final static String DEFAULT_TITLE = "CLOCK v" + VERSION_NUMBER;
-	private final String DEFAULT_FILEPATH = "clock_settings";
+	private String settingsFileURL = "http://nateshot.homenet.org:8025/clock_settings.txt";
 	
 	private JFrame frame;
 	private JLabel timeLabel;
@@ -67,7 +63,7 @@ public class BigClock
 		/*
 		 * Create window and initialize clock.
 		 */
-		frame = new JFrame( DEFAULT_TITLE );
+		frame = new JFrame( SettingsHelper.DEFAULT_TITLE );
 		frame.setSize( 660, 500 );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		
@@ -198,7 +194,7 @@ public class BigClock
 		try
 		{
 			// use default file path
-			Scanner settings = new Scanner( new File( DEFAULT_FILEPATH ) );
+			Scanner settings = new Scanner( new File( SettingsHelper.DEFAULT_FILEPATH ) );
 			
 			String setting, selector[];
 			
@@ -211,7 +207,7 @@ public class BigClock
 				/*
 				 * Deblank the string for simpler use
 				 */
-				setting = removeWhiteSpaces( settings.nextLine() );
+				setting = SettingsHelper.removeWhiteSpaces( settings.nextLine() );
 				
 				/*
 				 * if the line is empty, move to the next one.
@@ -229,7 +225,7 @@ public class BigClock
 				 * Check if the setting is valid - with two parts. If not, move
 				 * to the next line.
 				 */
-				selector = setting.split( DELIMITER );
+				selector = setting.split( SettingsHelper.DELIMITER );
 				if ( selector.length != 2 )
 					continue;
 				
@@ -248,7 +244,7 @@ public class BigClock
 						// gets the numbers separated by commas
 						tempString = selector[1].substring( 1, selector[1].length() - 1 );
 						
-						newColor = verifyColor( tempString );
+						newColor = SettingsHelper.verifyColor( tempString );
 						
 						fileSettings.setBackgroundColor( newColor );
 						continue;
@@ -259,13 +255,13 @@ public class BigClock
 						// gets the numbers separated by commas
 						tempString = selector[1].substring( 1, selector[1].length() - 1 );
 						
-						newColor = verifyColor( tempString );
+						newColor = SettingsHelper.verifyColor( tempString );
 						
 						fileSettings.setForegroundColor( newColor );
 						continue;
 					
 					case "title":
-						fileSettings.setTitle( respace( selector[1] ) );
+						fileSettings.setTitle( SettingsHelper.respace( selector[1] ) );
 						continue;
 					
 					case "extended-state":
@@ -307,7 +303,7 @@ public class BigClock
 			PrintWriter fileOut;
 			try
 			{
-				fileOut = new PrintWriter( new File( DEFAULT_FILEPATH ) );
+				fileOut = new PrintWriter( new File( SettingsHelper.DEFAULT_FILEPATH ) );
 				fileOut.println( defSettings.toString() );
 				fileOut.close();
 			} catch ( FileNotFoundException e )
@@ -349,7 +345,7 @@ public class BigClock
 				/*
 				 * Deblank the string for simpler use
 				 */
-				setting = removeWhiteSpaces( settings.nextLine() );
+				setting = SettingsHelper.removeWhiteSpaces( settings.nextLine() );
 				
 				/*
 				 * if the line is empty, move to the next one.
@@ -367,7 +363,7 @@ public class BigClock
 				 * Check if the setting is valid - with two parts. If not, move
 				 * to the next line.
 				 */
-				selector = setting.split( DELIMITER );
+				selector = setting.split( SettingsHelper.DELIMITER );
 				if ( selector.length != 2 )
 					continue;
 				
@@ -386,7 +382,7 @@ public class BigClock
 						// gets the numbers separated by commas
 						tempString = selector[1].substring( 1, selector[1].length() - 1 );
 						
-						newColor = verifyColor( tempString );
+						newColor = SettingsHelper.verifyColor( tempString );
 						
 						netSettings.setBackgroundColor( newColor );
 						continue;
@@ -397,13 +393,13 @@ public class BigClock
 						// gets the numbers separated by commas
 						tempString = selector[1].substring( 1, selector[1].length() - 1 );
 						
-						newColor = verifyColor( tempString );
+						newColor = SettingsHelper.verifyColor( tempString );
 						
 						netSettings.setForegroundColor( newColor );
 						continue;
 					
 					case "title":
-						netSettings.setTitle( respace( selector[1] ) );
+						netSettings.setTitle( SettingsHelper.respace( selector[1] ) );
 						continue;
 					
 					case "extended-state":
@@ -560,124 +556,13 @@ public class BigClock
 		
 		this.setBackgroundColor( cs.getBackgroundColor() );
 		this.setTextColor( cs.getForegroundColor() );
-		frame.setTitle( respace( cs.getTitle() ) );
+		frame.setTitle( SettingsHelper.respace( cs.getTitle() ) );
 		frame.setExtendedState( cs.getExtendedState() );
 		this.updateQueryInterval = cs.getQueryInterval();
 		this.refreshInterval = cs.getRefreshInterval();
 		settingsFileURL = cs.getNetURL();
 		this.useNetSettings = cs.getUseNetSettings();
 		return;
-	}
-	
-	/**
-	 * This method will replace all '%' symbols in a string with a single blank
-	 * space.
-	 * 
-	 * @param deblankedString
-	 *            The string to be re-spaced.
-	 * @return A string void of any '%' symbols, which have been replaced by a
-	 *         space.
-	 */
-	private static String respace( String deblankedString )
-	{
-		
-		String str = "";
-		char[] charArray = deblankedString.toCharArray();
-		
-		for ( int i = 0; i < charArray.length; i++ )
-		{
-			if ( charArray[i] == '%' )
-				str += " ";
-			else
-				str += charArray[i];
-		}
-		
-		return str;
-	}
-	
-	private static String despace( String spacedString )
-	{
-		
-		String str = "";
-		char[] charArray = spacedString.toCharArray();
-		
-		for ( int i = 0; i < charArray.length; i++ )
-		{
-			if ( charArray[i] == ' ' )
-				str += "%";
-			else
-				str += charArray[i];
-		}
-		
-		return str;
-	}
-	
-	/**
-	 * This method takes a string in the format of "N,N,N" (excluding the
-	 * quotes) and parses each N into a number which will be used for its
-	 * corresponding RGB color. The string must be deblanked.
-	 * 
-	 * @param color
-	 *            The string representing the RGB values
-	 * @return A color object created from the RGB values passed in (unless the
-	 *         numbers passed it were larger than 255 or less than 0, then that
-	 *         R, G, or B value will be 255 or 0, respectively.
-	 */
-	private static Color verifyColor( String color )
-	{
-		
-		int red, green, blue;
-		
-		color = removeWhiteSpaces( color );
-		
-		red = Integer.parseInt( color.split( "," )[0] );
-		green = Integer.parseInt( color.split( "," )[1] );
-		blue = Integer.parseInt( color.split( "," )[2] );
-		
-		/*
-		 * Verify that the new colors will work.
-		 */
-		if ( red > 255 )
-			red = 255;
-		else if ( 0 > red )
-			red = 0;
-		if ( green > 255 )
-			green = 255;
-		else if ( 0 > green )
-			green = 0;
-		if ( blue > 255 )
-			blue = 255;
-		else if ( 0 > blue )
-			blue = 0;
-		
-		return new Color( red, green, blue );
-	}
-	
-	/**
-	 * This method removes any blanks (new line character, space, or new line
-	 * character) from a string.
-	 * 
-	 * @param str
-	 *            The string to remove white spaces from.
-	 * @return The same string passed in, void of any white spaces.
-	 */
-	public static String removeWhiteSpaces( String str )
-	{
-		
-		int index, length = str.length();
-		char ch;
-		String deblanked = "";
-		
-		for ( index = 0; index < length; index++ )
-		{
-			ch = str.charAt( index );
-			if ( !Character.isSpaceChar( ch ) )
-			{
-				deblanked += ch;
-			}
-		}
-		
-		return deblanked;
 	}
 	
 	public static void main( String[] args ) throws IOException
@@ -692,7 +577,7 @@ public class BigClock
 		public void actionPerformed( ActionEvent e )
 		{
 			
-			saveSettings( DEFAULT_FILEPATH );
+			saveSettings( SettingsHelper.DEFAULT_FILEPATH );
 			System.exit( 0 );
 		}
 	}
@@ -716,7 +601,7 @@ public class BigClock
 				
 				if ( !fileSettings.getUseNetSettings() )
 					useFileSettings();
-				saveSettings( DEFAULT_FILEPATH );
+				saveSettings( SettingsHelper.DEFAULT_FILEPATH );
 				return;
 			}
 			
@@ -725,7 +610,7 @@ public class BigClock
 			
 			if ( !fileSettings.getUseNetSettings() )
 				useFileSettings();
-			saveSettings( DEFAULT_FILEPATH );
+			saveSettings( SettingsHelper.DEFAULT_FILEPATH );
 			return;
 		}
 	}
@@ -738,7 +623,7 @@ public class BigClock
 			
 			// Open preferences GUI
 			new PreferenceWindow();
-			saveSettings( DEFAULT_FILEPATH );
+			saveSettings( SettingsHelper.DEFAULT_FILEPATH );
 			return;
 		}
 	}
@@ -935,7 +820,7 @@ public class BigClock
 					useFileSettings();
 				
 				// disabling would not allow someone to uncheck using net
-				saveSettings( DEFAULT_FILEPATH );
+				saveSettings( SettingsHelper.DEFAULT_FILEPATH );
 				
 				pFrame.dispose();
 			}
@@ -969,7 +854,7 @@ public class BigClock
 		
 		public ClockSettings()
 		{
-			this.title = DEFAULT_TITLE;
+			this.title = SettingsHelper.DEFAULT_TITLE;
 			this.netURL = settingsFileURL;
 			this.backgroundColor = new Color( 45, 54, 45 );
 			this.foregroundColor = new Color( 155, 172, 134 );
@@ -1080,16 +965,17 @@ public class BigClock
 		public String toString()
 		{
 			
-			return "background-color" + BigClock.DELIMITER + "(" + this.backgroundColor.getRed() +
-					"," + this.backgroundColor.getGreen() + "," + this.backgroundColor.getBlue() +
-					")\n" + "font-color" + BigClock.DELIMITER + "(" +
-					this.foregroundColor.getRed() + "," + this.foregroundColor.getGreen() + "," +
-					this.foregroundColor.getBlue() + ")\n" + "title" + BigClock.DELIMITER +
-					despace( this.title ) + "\nextended-state" + BigClock.DELIMITER +
-					this.extendedState + "\nquery-interval" + BigClock.DELIMITER +
-					this.queryInterval + "\nrefresh-interval" + BigClock.DELIMITER +
-					this.refreshInterval + "\nsettings-url" + BigClock.DELIMITER + settingsFileURL +
-					"\nuse-net-settings" + BigClock.DELIMITER + this.useNetSettings;
+			return "background-color" + SettingsHelper.DELIMITER + "(" +
+					this.backgroundColor.getRed() + "," + this.backgroundColor.getGreen() + "," +
+					this.backgroundColor.getBlue() + ")\n" + "font-color" +
+					SettingsHelper.DELIMITER + "(" + this.foregroundColor.getRed() + "," +
+					this.foregroundColor.getGreen() + "," + this.foregroundColor.getBlue() + ")\n" +
+					"title" + SettingsHelper.DELIMITER + SettingsHelper.despace( this.title ) +
+					"\nextended-state" + SettingsHelper.DELIMITER + this.extendedState +
+					"\nquery-interval" + SettingsHelper.DELIMITER + this.queryInterval +
+					"\nrefresh-interval" + SettingsHelper.DELIMITER + this.refreshInterval +
+					"\nsettings-url" + SettingsHelper.DELIMITER + settingsFileURL +
+					"\nuse-net-settings" + SettingsHelper.DELIMITER + this.useNetSettings;
 		}
 	}
 }
