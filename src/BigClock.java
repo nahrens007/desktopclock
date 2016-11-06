@@ -31,7 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class BigClock
-{
+{ 
 	
 	private String settingsFileURL = "http://nateshot.homenet.org:8025/clock_settings.txt";
 	
