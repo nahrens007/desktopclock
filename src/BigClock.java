@@ -5,6 +5,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
@@ -65,20 +67,19 @@ public class BigClock
 		 */
 		frame = new JFrame( SettingsHelper.DEFAULT_TITLE );
 		frame.setSize( 660, 500 );
+		frame.setExtendedState( 6 );
+		frame.setIconImage( ImageIO
+				.read( BigClock.class.getClassLoader().getResourceAsStream( "clock.png" ) ) );
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		
 		buildMenuBar();
 		
 		main = new JPanel();
 		
-		// BigClock.setUIFont( new FontUIResource( new Font( "Arial", 0, 40 ) )
-		// );
-		
 		timeLabel = new JLabel();
 		dateLabel = new JLabel();
 		container = new JPanel();
-		timeLabel.setFont( new Font( "Arial", Font.BOLD, 150 ) );
-		dateLabel.setFont( new Font( "Arial", Font.BOLD, 40 ) );
+		
 		timeLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
 		dateLabel.setAlignmentX( Component.CENTER_ALIGNMENT );
 		
@@ -91,12 +92,6 @@ public class BigClock
 		main.add( container );
 		setBackgroundColor( Color.LIGHT_GRAY );
 		
-		frame.add( main );
-		frame.setExtendedState( 6 );
-		frame.setIconImage( ImageIO
-				.read( BigClock.class.getClassLoader().getResourceAsStream( "clock.png" ) ) );
-		frame.setVisible( true );
-		
 		timeFormatter = new SimpleDateFormat( "kk:mm:ss" );
 		dateFormatter = new SimpleDateFormat( "EEEE, MMM d, yyyy" );
 		
@@ -105,6 +100,22 @@ public class BigClock
 		netSettings = new ClockSettings();
 		
 		loadFileSettings();
+		
+		frame.add( main );
+		frame.setVisible( true );
+		frame.addComponentListener( new ComponentAdapter()
+		{
+			
+			public void componentResized( ComponentEvent evt )
+			{
+				
+				System.out.println( frame.getWidth() );
+				timeLabel.setFont( new Font( "Arial", Font.BOLD, frame.getWidth() / 10 ) );
+			}
+		} );
+		System.out.println( frame.getWidth() );
+		timeLabel.setFont( new Font( "Arial", Font.BOLD, frame.getWidth() / 10 ) );
+		dateLabel.setFont( new Font( "Arial", Font.BOLD, 40 ) );
 		
 		start();
 	}
