@@ -2,7 +2,7 @@ import java.awt.Color;
 
 public abstract class SettingsHelper
 {
-	public final static float VERSION_NUMBER = 2.5f;
+	public final static float VERSION_NUMBER = 2.6f;
 	public final static String DEFAULT_TITLE = "CLOCK v" + VERSION_NUMBER;
 	public final static String DEFAULT_FILEPATH = "clock_settings";
 	public final static String DELIMITER = "::";

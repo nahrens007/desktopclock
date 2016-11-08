@@ -103,19 +103,19 @@ public class BigClock
 		
 		frame.add( main );
 		frame.setVisible( true );
+		
+		// Make the font size change on frame resize
 		frame.addComponentListener( new ComponentAdapter()
 		{
 			
 			public void componentResized( ComponentEvent evt )
 			{
 				
-				System.out.println( frame.getWidth() );
-				timeLabel.setFont( new Font( "Arial", Font.BOLD, frame.getWidth() / 10 ) );
+				// System.out.println( frame.getWidth() );
+				timeLabel.setFont( new Font( "Arial", Font.BOLD, frame.getWidth() / 5 ) );
+				dateLabel.setFont( new Font( "Arial", Font.BOLD, frame.getWidth() / 14 ) );
 			}
 		} );
-		System.out.println( frame.getWidth() );
-		timeLabel.setFont( new Font( "Arial", Font.BOLD, frame.getWidth() / 10 ) );
-		dateLabel.setFont( new Font( "Arial", Font.BOLD, 40 ) );
 		
 		start();
 	}
